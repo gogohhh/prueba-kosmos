@@ -2,13 +2,17 @@ import React, { useRef, useState, useEffect } from "react";
 import Moveable from "react-moveable";
 
 const App = () => {
+  const [images, setImages] = useState([]);
   const [moveableComponents, setMoveableComponents] = useState([]);
   const [selected, setSelected] = useState(null);
+  const [randomimage, setRandomImage] = useState()
 
   const addMoveable = () => {
     // Create a new moveable component and add it to the array
     const COLORS = ["red", "blue", "yellow", "green", "purple"];
-
+    var num = Math.random() * (1000 - 1)
+    num = Math.floor(num)
+    setRandomImage(images[num].url) //Seteamos la url de la imagen random
     setMoveableComponents([
       ...moveableComponents,
       {
@@ -18,11 +22,26 @@ const App = () => {
         width: 100,
         height: 100,
         color: COLORS[Math.floor(Math.random() * COLORS.length)],
-        updateEnd: true
+        updateEnd: true,
+        urlimage: images[num].url
       },
     ]);
   };
 
+  //Funcion para eliminar el componente seleccionado
+  const deleteMoveable = () => {
+    //Advertencia si no se selecciona ningun componente
+    if (!selected || selected === null) {
+      alert("Seleccione el componente que quiere eliminar");
+      return;
+    }
+    const updatedMoveables = moveableComponents.filter(
+      (moveable) => moveable.id !== selected
+    );
+    setMoveableComponents(updatedMoveables);
+  };
+
+  //Funcion para mover el componente dentro del contenedor
   const updateMoveable = (id, newComponent, updateEnd = false) => {
     const updatedMoveables = moveableComponents.map((moveable, i) => {
       if (moveable.id === id) {
@@ -33,6 +52,7 @@ const App = () => {
     setMoveableComponents(updatedMoveables);
   };
 
+  //Funcion para redimensionar el componente
   const handleResizeStart = (index, e) => {
     console.log("e", e.direction);
     // Check if the resize is coming from the left handle
@@ -54,16 +74,67 @@ const App = () => {
     }
   };
 
+  //Funcion para obtener las imagenes de la api
+  const getImages = async () => {
+    try {
+    const data = await fetch('https://jsonplaceholder.typicode.com/photos')
+      .then(response => response.json())
+      setImages(data)
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  useEffect(() => {
+    getImages();
+  }, []);
+
   return (
     <main style={{ height : "100vh", width: "100vw" }}>
-      <button onClick={addMoveable}>Add Moveable1</button>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: '20px'
+      }}>
+        <button style={
+          {
+            marginRight: '20px',
+            backgroundColor: '#4CAF50',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            boxShadow: '0 4px 8px 0 rgba(0, 0, 0, 0.2)',
+            textTransform: 'uppercase',
+            fontWeight: 'bold',
+            padding: '16px 32px',
+            transition: 'all 0.3s ease',
+            cursor: 'pointer',
+          }
+        } onClick={addMoveable}>Add Moveable</button>
+        <button style={{
+            marginRight: '20px',
+            backgroundColor: '#FA1010',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            boxShadow: '0 4px 8px 0 rgba(0, 0, 0, 0.2)',
+            textTransform: 'uppercase',
+            fontWeight: 'bold',
+            padding: '16px 32px',
+            transition: 'all 0.3s ease',
+            cursor: 'pointer',
+          }} onClick={deleteMoveable}>Delete Moveable</button>
+      </div>
       <div
         id="parent"
         style={{
+          marginTop: "20px",
           position: "relative",
           background: "black",
           height: "80vh",
           width: "80vw",
+          margin: "0 auto",
         }}
       >
         {moveableComponents.map((item, index) => (
@@ -74,6 +145,7 @@ const App = () => {
             handleResizeStart={handleResizeStart}
             setSelected={setSelected}
             isSelected={selected === item.id}
+            imagenseteada={randomimage}
           />
         ))}
       </div>
@@ -95,6 +167,7 @@ const Component = ({
   setSelected,
   isSelected = false,
   updateEnd,
+  imagenseteada,
 }) => {
   const ref = useRef();
 
@@ -196,7 +269,10 @@ const Component = ({
           left: left,
           width: width,
           height: height,
-          background: color,
+          backgroundImage: `url(${imagenseteada})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          //background: color,
         }}
         onClick={() => setSelected(id)}
       />
@@ -223,7 +299,8 @@ const Component = ({
         zoom={1}
         origin={false}
         padding={{ left: 0, top: 0, right: 0, bottom: 0 }}
-      />
+      >
+      </Moveable>
     </>
   );
 };
